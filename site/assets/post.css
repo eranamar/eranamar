@@ -1,0 +1,102 @@
+.page-content, .sub-title, .page-link {
+    --x-height-multiplier: 0.35;
+    --baseline-multiplier: 0.179;
+    font-family: Georgia,Cambria,"Times New Roman",Times,serif;
+    font-weight: 400;
+    font-style: normal;
+    line-height: 1.6;
+    letter-spacing: -.004em;
+    word-break: break-word;
+    word-wrap: break-word;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    color: rgba(0,0,0,.9);
+    font-size: 20px;
+}
+.post-content p { text-align: justify;} 
+.archive_list a { font-size: 22px; }
+div.post-content h1 { font-size: 32px; }
+div.post-content h2 { font-size: 30px; }
+div.post-content h3 { font-size: 28px; }
+div.sub-title { font-size: 22px; }
+.post-content div, ol { /* post body */
+  font-size: 24px;
+}
+
+@media all and (max-width: 640px) {
+  .archive_list a { font-size: 17px; }
+  div.post-content h1 { font-size: 27px; }
+  div.post-content h2 { font-size: 26px; }
+  div.post-content h3 { font-size: 24px; }
+  div.sub-title { font-size: 17px; }
+  .post-content div, ol { /* post body */
+    font-size: 19px;
+  }
+}
+.post-content img.embedded {
+  display: block;
+  margin: 0 auto;
+}
+.post-content h1, .post-content h2, .post-content h3, .post-content h4, .post-content h5, .post-content h6, 
+.post-content p, .post-content blockquote, .post-content pre, 
+.post-content ul, .post-content ol, .post-content dl, .post-content figure, .highlight {
+    margin-bottom: 15px;
+    margin-top: 15px;
+}
+.Indented, .Unindented, .Theorem, .Lemma, .Claim, .Proof, .Definition, .post-content ol {
+    margin-bottom: 10px;
+    text-align: justify;
+}
+.Theorem {
+    display: block;
+    margin: 12px 0;
+    font-style: italic;
+}
+.Theorem:before {
+  content: "Theorem.";
+  font-weight: bold;
+  font-style: normal;
+}
+.Lemma {
+  display: block;
+  margin: 12px 0;
+  font-style: italic;
+}
+.Lemma:before {
+  content: "Lemma.";
+  font-weight: bold;
+  font-style: normal;
+}
+.Claim {
+  display: block;
+  margin: 12px 0;
+  font-style: italic;
+}
+.Claim:before {
+  content: "Claim.";
+  font-weight: bold;
+  font-style: normal;
+}
+.Proof {
+  display: block;
+  margin: 12px 0;
+  font-style: normal;
+}
+.Proof:before {
+  content: "Proof.";
+  font-style: italic;
+}
+.Proof:after {
+  content: "\25FC";
+  float:right;
+}
+.Definition {
+  display: block;
+  margin: 12px 0;
+  font-style: normal;
+}
+.Definition:before {
+  content: "Definition.";
+  font-weight: bold;
+  font-style: normal;
+}

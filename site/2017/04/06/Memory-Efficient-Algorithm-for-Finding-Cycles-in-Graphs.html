@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+  <script>
+    'use strict';
+    (function(){
+      var path = window.location.pathname.replace(/^\/+/, '/');
+      if (! /^\/site/.test(path)){
+        window.location.replace("/site" + path);
+      } else if (path !== window.location.pathname) {
+        window.location.replace(path);
+      }
+    })();
+  </script>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="AUTHOR" content="Eran Amar">
+  <meta name="Keywords" content="Amar Eran, Eran Amar, eranamar, blog, computer science, theory of computer science,  probability, statistics, deep learning, theory lunch, TheoryLunch">
+  <title>Memory Efficient Algorithm for Finding Cycles in Graphs</title>
+  <meta name="description" content="Warning: MathJax requires JavaScript to correctly process the mathematics on this page. Please enable JavaScript on your browser. &amp;lt;/hr&amp;gt;">
+  <link rel="stylesheet" href="/site/assets/main.css">
+  <link rel="stylesheet" href="/site/assets/post.css">
+  <link rel="canonical" href="https://eranamar.github.io/site/2017/04/06/Memory-Efficient-Algorithm-for-Finding-Cycles-in-Graphs.html">
+  <link rel="alternate" type="application/rss+xml" title="TheoryLunch Blog" href="/site/feed.xml">
+
+  
+  <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-85168990-2', 'auto');
+  ga('send', 'pageview');
+
+</script>
+  
+
+  
+</head>
+
+
+  <body>
+
+    <header class="site-header" role="banner">
+	
+  <div class="wrapper">
+
+    <a class="site-title" href="/site/">TheoryLunch Blog</a>
+
+    <nav class="site-nav">
+      <span class="menu-icon">
+        <svg viewBox="0 0 18 15" width="18px" height="15px">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+      </span>
+
+      <div class="trigger">
+        
+          
+          <a class="page-link" href="/site/about/">About</a>
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+      </div>
+    </nav>
+
+  </div>
+	<div class="wrapper sub-title"> 
+	Computer science topics over lunch
+	</div>
+</header>
+
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title" itemprop="name headline">Memory Efficient Algorithm for Finding Cycles in Graphs</h1>
+    <p class="post-meta"><time datetime="2017-04-06T00:00:00+03:00" itemprop="datePublished">Apr 6, 2017</time> • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">Eran Amar</span></span></p>
+	<div class="tags">
+	 tags: <a href="/site/tag/complexity.html" rel="tag">complexity</a>, <a href="/site/tag/algorithms.html" rel="tag">algorithms</a>
+	</div>
+  </header>
+  <div class="">
+    <div class="post-content" itemprop="articleBody">
+      <script type="math/tex">
+\newcommand{\lyxlock}{}
+</script>
+
+<noscript>
+<div class="warning">
+Warning: <a href="http://www.mathjax.org/">MathJax</a> requires JavaScript to correctly process the mathematics on this page. Please enable JavaScript on your browser.
+</div><hr />
+&lt;/hr&gt;</noscript>
+
+<h1 class="Section">
+<a class="toc" name="toc-Section-1">1</a> Cycle Detection in Graphs 
+</h1>
+<div class="Unindented">
+Somewhere in 2015, I encountered a nice algorithmic question during an interview for an algotreading company. The question was <i>how one can decide if there is a cycle in an undirected connected graph</i>? There are two immediate answers here, the first is running <i>Breadth First Search (BFS)</i> on arbitrary node and memorizing the nodes that were already visited. The search ends either when the algorithm complete scanning the whole graph or when it reaches some node twice, outputting “No” or “Yes” respectively. Another possible solution is by running <i>Depth First Search (DFS)</i> and keeping a variable to count the length of the longest path explored. The algorithm declare a cycle if at any point in time the length of the path reaches the number of vertices in the graph. For the rest of this post, denote that number by <span class="MathJax_Preview"><script type="math/tex">
+n
+</script>
+</span>.
+</div>
+<div class="Indented">
+Those two solutions are simple, and more important for this discussion, have the same <i>space complexity</i>. That is, both consume around the same amount of working memory (in bits) ignoring the memory needed for the input and output of the algorithm. Even though DFS have implementation that requires less memory than BFS, ultimately both requires <span class="MathJax_Preview"><script type="math/tex">
+\Omega\left(n\log n\right)
+</script>
+</span> bits. One can (informally) justify the aforementioned space complexity as follow: both algorithms have to keep track of their search (a queue in BFS and a stack is DFS) which potentially can be as large as the entire graph thus <span class="MathJax_Preview"><script type="math/tex">
+\Omega\left(n\right)
+</script>
+</span>, and each node need <span class="MathJax_Preview"><script type="math/tex">
+\Omega\left(\log n\right)
+</script>
+</span> bits for encoding so the total space complexity is <span class="MathJax_Preview"><script type="math/tex">
+\Omega\left(n\log n\right)
+</script>
+</span> bits.
+</div>
+<div class="Indented">
+During the rest of this post we will focus on <i>space complexity</i> rather than <i>time complexity</i>. We will present an algorithm that can determine if there is a cycle in <span class="MathJax_Preview"><script type="math/tex">
+\mathcal{O}\left(\log^{2}n\right)
+</script>
+</span> bits [base on <a class="URL" href="http://www.sciencedirect.com/science/article/pii/S002200007080006X">this paper</a>] and then discuss the importance of related problem: the <i>s-t connectivity</i>.
+</div>
+<h1 class="Section">
+<a class="toc" name="toc-Section-2">2</a> The <i>s-t Connectivity</i> Problem
+</h1>
+<h2 class="Subsection">
+<a class="toc" name="toc-Subsection-2.1">2.1</a> Solving <i>s-t connectivity</i> as a Sub-step
+</h2>
+<div class="Unindented">
+We will start from solving a slightly different problem then uses its solution as a procedure in our cycle-detection algorithm. 
+</div>
+<div class="Indented">
+Introducing the <i>undirected s-t connectivity</i> problem: The input is an undirected graph <span class="MathJax_Preview"><script type="math/tex">
+G=\left(V,E\right)
+</script>
+</span> of size <span class="MathJax_Preview"><script type="math/tex">
+n
+</script>
+</span> and two vertices <span class="MathJax_Preview"><script type="math/tex">
+s,t\in V
+</script>
+</span>. The output should be <span class="MathJax_Preview"><script type="math/tex">
+1
+</script>
+</span> if there is path in <span class="MathJax_Preview"><script type="math/tex">
+G
+</script>
+</span> that connects <span class="MathJax_Preview"><script type="math/tex">
+s
+</script>
+</span> and <span class="MathJax_Preview"><script type="math/tex">
+t
+</script>
+</span>, and <span class="MathJax_Preview"><script type="math/tex">
+0
+</script>
+</span> otherwise. The <i>directed s-t connectivity</i> is about the same but the input graph is directed (i.e its edges has directions) and the output should be <span class="MathJax_Preview"><script type="math/tex">
+1
+</script>
+</span> whether there is a <i>directed</i> path from <span class="MathJax_Preview"><script type="math/tex">
+s
+</script>
+</span> to <span class="MathJax_Preview"><script type="math/tex">
+t
+</script>
+</span>.
+</div>
+<div class="Indented">
+Before we present the algorithm, we first define the following predicate: for any <span class="MathJax_Preview"><script type="math/tex">
+u,v\in V
+</script>
+</span> and <span class="MathJax_Preview"><script type="math/tex">
+k\in\mathbb{N}
+</script>
+</span> define <span class="MathJax_Preview"><script type="math/tex">
+conn\left(u,v;k\right)=1
+</script>
+</span> if exists a path from <span class="MathJax_Preview"><script type="math/tex">
+u
+</script>
+</span> to <span class="MathJax_Preview"><script type="math/tex">
+v
+</script>
+</span> of at most <span class="MathJax_Preview"><script type="math/tex">
+k
+</script>
+</span> steps (i.e. edges), otherwise <span class="MathJax_Preview"><script type="math/tex">
+conn\left(u,v;k\right)=0
+</script>
+</span>. 
+</div>
+<div class="Indented">
+The next observations are key points needed to solve the <i>s-t connectivity </i>efficiently (both for directed and undirected case).
+</div>
+<ol>
+<li>
+For any <span class="MathJax_Preview"><script type="math/tex">
+u,v\in V
+</script>
+</span> and any <span class="MathJax_Preview"><script type="math/tex">
+k\in\mathbb{N}
+</script>
+</span>, we have that <span class="MathJax_Preview"><script type="math/tex">
+conn\left(u,v;2^{k}\right)=1
+</script>
+</span> if and only if <span class="MathJax_Preview"><script type="math/tex">
+\exists w\in V
+</script>
+</span> such that <span class="MathJax_Preview"><script type="math/tex">
+conn\left(u,w;2^{k-1}\right)=1
+</script>
+</span> and <span class="MathJax_Preview"><script type="math/tex">
+conn\left(w,v;2^{k-1}\right)=1
+</script>
+</span>
+</li>
+<li>
+Let <span class="MathJax_Preview"><script type="math/tex">
+u,v\in V
+</script>
+</span>, they are connected if and only if <span class="MathJax_Preview"><script type="math/tex">
+conn\left(u,v;2^{\lceil\log n\rceil}\right)=1
+</script>
+</span>
+</li>
+</ol>
+<div class="Unindented">
+From here the algorithm is straightforward: denote the algorithm by <span class="MathJax_Preview"><script type="math/tex">
+Alg\left(u,v;2^{k}\right)
+</script>
+</span> that upon receiving <span class="MathJax_Preview"><script type="math/tex">
+u,v
+</script>
+</span> from the graph <span class="MathJax_Preview"><script type="math/tex">
+G=\left(V,E\right)
+</script>
+</span> and <span class="MathJax_Preview"><script type="math/tex">
+k\in\mathbb{N}
+</script>
+</span>:
+</div>
+<ol>
+<li>
+If <span class="MathJax_Preview"><script type="math/tex">
+k=0
+</script>
+</span>, it outputs <span class="MathJax_Preview"><script type="math/tex">
+\mathbf{1}_{\left[u=v\right]}
+</script>
+</span>, and if <span class="MathJax_Preview"><script type="math/tex">
+k=1
+</script>
+</span> it outputs <span class="MathJax_Preview"><script type="math/tex">
+\mathbf{1}_{\left[u=v\vee\left(u,v\right)\in E\right]}
+</script>
+</span>
+</li>
+<li>
+For each <span class="MathJax_Preview"><script type="math/tex">
+w\in V
+</script>
+</span>: if <span class="MathJax_Preview"><script type="math/tex">
+Alg\left(u,w;2^{k-1}\right)=1
+</script>
+</span> and <span class="MathJax_Preview"><script type="math/tex">
+Alg\left(w,v;2^{k-1}\right)=1
+</script>
+</span> then output <span class="MathJax_Preview"><script type="math/tex">
+1
+</script>
+</span>
+</li>
+<li>
+Output <span class="MathJax_Preview"><script type="math/tex">
+0
+</script>
+</span>
+</li>
+</ol>
+<div class="Unindented">
+The solution for <i>s-t connectivity</i> can be achieved by outputting “Yes” if and only if <span class="MathJax_Preview"><script type="math/tex">
+Alg\left(s,t,2^{\lceil\log n\rceil}\right)=1
+</script>
+</span>. 
+</div>
+<div class="Indented">
+Obviously, the depth of the recursion is <span class="MathJax_Preview"><script type="math/tex">
+\mathcal{O}\left(\log n\right)
+</script>
+</span> and in each level of the recursion the algorithm only needs to keep track of <span class="MathJax_Preview"><script type="math/tex">
+w
+</script>
+</span> and <span class="MathJax_Preview"><script type="math/tex">
+k
+</script>
+</span>, which is <span class="MathJax_Preview"><script type="math/tex">
+\mathcal{O}\left(\log n\right)
+</script>
+</span> bits, therefore the total memory complexity of the algorithm is <span class="MathJax_Preview"><script type="math/tex">
+\mathcal{O}\left(\log^{2}n\right)
+</script>
+</span> bits.
+</div>
+<h2 class="Subsection">
+<a class="toc" name="toc-Subsection-2.2">2.2</a> Extending the algorithm to detect cycles
+</h2>
+<div class="Unindented">
+How solving the <i>s-t connectivity</i> problem helps us with cycles detection? The next observation answer that: let <span class="MathJax_Preview"><script type="math/tex">
+G=\left(V,E\right)
+</script>
+</span> be the graph in question and <span class="MathJax_Preview"><script type="math/tex">
+u,v\in V
+</script>
+</span> two endpoints of some edge, they must stay connected after removing that edge from <span class="MathJax_Preview"><script type="math/tex">
+G
+</script>
+</span> if and only if both participating in a cycle contained in <span class="MathJax_Preview"><script type="math/tex">
+G
+</script>
+</span>.
+</div>
+<div class="Indented">
+For the directed case the algorithm is as follow: iterate over any edge <span class="MathJax_Preview"><script type="math/tex">
+\left(u,v\right)\in E
+</script>
+</span>, delete it temporarily from <span class="MathJax_Preview"><script type="math/tex">
+G
+</script>
+</span> and check if <span class="MathJax_Preview"><script type="math/tex">
+Alg\left(v,u;2^{\lceil\log n\rceil}\right)=1
+</script>
+</span> on the resulting graph, that is, if <span class="MathJax_Preview"><script type="math/tex">
+v
+</script>
+</span> is still connected to <span class="MathJax_Preview"><script type="math/tex">
+u
+</script>
+</span> even after you delete the edge from <span class="MathJax_Preview"><script type="math/tex">
+u
+</script>
+</span> to <span class="MathJax_Preview"><script type="math/tex">
+v
+</script>
+</span>. If <span class="MathJax_Preview"><script type="math/tex">
+Alg\left(v,u;2^{\lceil\log n\rceil}\right)=1
+</script>
+</span> then declare a cycle, else, restore back the edge and continue to the next one. Note that this solution also works for undirected graphs. The memory complexity is <span class="MathJax_Preview"><script type="math/tex">
+\mathcal{O}\left(\log^{2}n\right)+\log n=\mathcal{O}\left(\log^{2}n\right)
+</script>
+</span> and we done.
+</div>
+<h2 class="Subsection">
+<a class="toc" name="toc-Subsection-2.3">2.3</a> Is it the best we can do?
+</h2>
+<div class="Unindented">
+Actually, for undirected graphs there is an algorithm with <span class="MathJax_Preview"><script type="math/tex">
+\mathcal{O}\left(\log n\right)
+</script>
+</span> bits, improving the square on the log in the construction from previous section. The curious reader can read more about it <a class="URL" href="http://www.cs.cornell.edu/courses/cs682/2008sp/Handouts/Reingold05.pdf">here</a>. For the directed case it is an open question whether we can improve the <span class="MathJax_Preview"><script type="math/tex">
+\log^{2}n
+</script>
+</span> or not.
+</div>
+<h2 class="Subsection">
+<a class="toc" name="toc-Subsection-2.4">2.4</a> Beyond Cycles in Graphs
+</h2>
+<div class="Unindented">
+The <i>directed s-t connectivity </i>problem is an important theoretical problem because it captures the “hardness” of any problem that requires logarithmic amount of memory space. The reduction to show that is actually very easy, suppose we have an algorithm that solves some problem in <span class="MathJax_Preview"><script type="math/tex">
+\mathcal{O}\left(s\right)
+</script>
+</span> space where <span class="MathJax_Preview"><script type="math/tex">
+s
+</script>
+</span> is logarithmic in <span class="MathJax_Preview"><script type="math/tex">
+n
+</script>
+</span> (and <span class="MathJax_Preview"><script type="math/tex">
+n
+</script>
+</span> is the size of the input), generate the following directed graph: create a vertex <span class="MathJax_Preview"><script type="math/tex">
+v
+</script>
+</span> for any state (memory configuration) of the algorithm. Since its memory is <span class="MathJax_Preview"><script type="math/tex">
+\mathcal{O}\left(s\right)
+</script>
+</span>, there are at most <span class="MathJax_Preview"><script type="math/tex">
+2^{\mathcal{O}\left(s\right)}=\mathcal{O}\left(poly\left(n\right)\right)
+</script>
+</span> states (thus vertices). Create an edge from <span class="MathJax_Preview"><script type="math/tex">
+u
+</script>
+</span> to <span class="MathJax_Preview"><script type="math/tex">
+v
+</script>
+</span> iff <span class="MathJax_Preview"><script type="math/tex">
+v
+</script>
+</span> is a valid possible successor state of <span class="MathJax_Preview"><script type="math/tex">
+u
+</script>
+</span>. Add a vertex <span class="MathJax_Preview"><script type="math/tex">
+t
+</script>
+</span> and connects to it all the states that leads to outputting “Yes”. Denote by <span class="MathJax_Preview"><script type="math/tex">
+s
+</script>
+</span> the starting-state of the algorithm and now solving the original problem is equivalent to finding a directed path from <span class="MathJax_Preview"><script type="math/tex">
+s
+</script>
+</span> to <span class="MathJax_Preview"><script type="math/tex">
+t
+</script>
+</span> in the states-graph.
+</div>
+<div class="Indented">
+This reduction was presented by Walter Savitch in 1970, and it also works for Nondeterministic algorithms. The conclusion is that any nondeterministic problem that can be solved in <span class="MathJax_Preview"><script type="math/tex">
+\mathcal{O}\left(s\right)
+</script>
+</span> space (where <span class="MathJax_Preview"><script type="math/tex">
+s
+</script>
+</span> is logarithmic in the size of the input) can be solved deterministically in <span class="MathJax_Preview"><script type="math/tex">
+\mathcal{O}\left(s^{2}\right)
+</script>
+</span>. Combining that conclusion with the algorithm for <i>directed s-t connectivity</i> yields that any problem with nondeterministic <span class="MathJax_Preview"><script type="math/tex">
+\mathcal{O}\left(\log n\right)
+</script>
+</span> space complexity can be solved deterministically (via reduction to <i>directed s-t connectivity</i>) with <span class="MathJax_Preview"><script type="math/tex">
+\mathcal{O}\left(\log^{2}n\right)
+</script>
+</span> space complexity.
+</div>
+  
+    </div>
+
+    
+  </div>
+</article>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/zepto/1.2.0/zepto.min.js"></script>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.7.1/katex.min.css" integrity="sha384-wITovz90syo1dJWVh32uuETPVEtGigN07tkttEqPv+uR2SE/mbQcG7ATL28aI9H0" crossorigin="anonymous">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.7.1/katex.min.js" integrity="sha384-/y1Nn9+QQAipbNQWU65krzJralCnuOasHncUFXGkdwntGeSvQicrYkiUBwsgUqc1" crossorigin="anonymous"></script>
+
+<script type="text/javascript">
+  'use strict';
+  $(".MathJax_Preview > script").each(function() {
+    var self = $(this);
+    var texTxt = self.text();
+    var el = self.get(0);
+    var isCenter = (el.type.indexOf('mode=display') !== -1);
+    
+    katex.render(texTxt, el.parentElement, {throwOnError: false, displayMode: isCenter});
+  });
+
+  $(document).ready(function(){
+    if(window.activate_disqus_comments){
+          window.activate_disqus_comments();
+    } 
+  });
+</script>
+
+      </div>
+    </main>
+
+    <footer class="site-footer">
+
+  <div class="wrapper">
+    <a href="/site/">
+      <h2 class="footer-heading">TheoryLunch Blog</h2>
+    </a>
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li>
+            
+              
+                Eran Amar
+              
+            
+            </li>
+            
+            <li><a href="mailto:eran.amar@gmail.com">eran.amar@gmail.com</a></li>
+            
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-2">
+        <ul class="social-media-list">
+          
+          <li>
+            <a href="https://github.com/eranamar"><span class="icon icon--github"><svg viewBox="0 0 16 16" width="16px" height="16px"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span><span class="username">eranamar</span></a>
+
+          </li>
+          
+
+          
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p>Computer science topics over lunch</p>
+      </div>
+	  </div>
+	  <a class="link" href="/site/feed.xml">RSS feed</a>
+	  
+  </div>
+
+</footer>
+
+
+
+  </body>
+
+</html>

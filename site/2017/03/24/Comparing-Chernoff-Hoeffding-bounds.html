@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+  <script>
+    'use strict';
+    (function(){
+      var path = window.location.pathname.replace(/^\/+/, '/');
+      if (! /^\/site/.test(path)){
+        window.location.replace("/site" + path);
+      } else if (path !== window.location.pathname) {
+        window.location.replace(path);
+      }
+    })();
+  </script>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="AUTHOR" content="Eran Amar">
+  <meta name="Keywords" content="Amar Eran, Eran Amar, eranamar, blog, computer science, theory of computer science,  probability, statistics, deep learning, theory lunch, TheoryLunch">
+  <title>Comparing Chernoff - Hoeffding bounds</title>
+  <meta name="description" content="Warning: MathJax requires JavaScript to correctly process the mathematics on this page. Please enable JavaScript on your browser. &amp;lt;/hr&amp;gt;">
+  <link rel="stylesheet" href="/site/assets/main.css">
+  <link rel="stylesheet" href="/site/assets/post.css">
+  <link rel="canonical" href="https://eranamar.github.io/site/2017/03/24/Comparing-Chernoff-Hoeffding-bounds.html">
+  <link rel="alternate" type="application/rss+xml" title="TheoryLunch Blog" href="/site/feed.xml">
+
+  
+  <script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-85168990-2', 'auto');
+  ga('send', 'pageview');
+
+</script>
+  
+
+  
+</head>
+
+
+  <body>
+
+    <header class="site-header" role="banner">
+	
+  <div class="wrapper">
+
+    <a class="site-title" href="/site/">TheoryLunch Blog</a>
+
+    <nav class="site-nav">
+      <span class="menu-icon">
+        <svg viewBox="0 0 18 15" width="18px" height="15px">
+          <path fill="#424242" d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.031C17.335,0,18,0.665,18,1.484L18,1.484z"/>
+          <path fill="#424242" d="M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0c0-0.82,0.665-1.484,1.484-1.484 h15.031C17.335,6.031,18,6.696,18,7.516L18,7.516z"/>
+          <path fill="#424242" d="M18,13.516C18,14.335,17.335,15,16.516,15H1.484C0.665,15,0,14.335,0,13.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.031C17.335,12.031,18,12.696,18,13.516L18,13.516z"/>
+        </svg>
+      </span>
+
+      <div class="trigger">
+        
+          
+          <a class="page-link" href="/site/about/">About</a>
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+          
+        
+      </div>
+    </nav>
+
+  </div>
+	<div class="wrapper sub-title"> 
+	Computer science topics over lunch
+	</div>
+</header>
+
+
+    <main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title" itemprop="name headline">Comparing Chernoff - Hoeffding bounds</h1>
+    <p class="post-meta"><time datetime="2017-03-24T00:00:00+02:00" itemprop="datePublished">Mar 24, 2017</time> • <span itemprop="author" itemscope itemtype="http://schema.org/Person"><span itemprop="name">Eran Amar</span></span></p>
+	<div class="tags">
+	 tags: <a href="/site/tag/probability_theory.html" rel="tag">probability_theory</a>
+	</div>
+  </header>
+  <div class="">
+    <div class="post-content" itemprop="articleBody">
+      <script type="math/tex">
+\newcommand{\lyxlock}{}
+</script>
+
+<noscript>
+<div class="warning">
+Warning: <a href="http://www.mathjax.org/">MathJax</a> requires JavaScript to correctly process the mathematics on this page. Please enable JavaScript on your browser.
+</div><hr />
+&lt;/hr&gt;</noscript>
+
+<h1 class="Section">
+<a class="toc" name="toc-Section-1">1</a> The Definitions and Motivation
+</h1>
+<div class="Unindented">
+Hoeffding and Chernoff bounds (a.k.a “inequalities”) are very common <i>concentration measures</i> that are being used in many fields in computer science. A concentration measure is a way to bound the probability for the event in which the sum of random variables is “far” from the sum of their means. 
+</div>
+<div class="Indented">
+For example: suppose we have <span class="MathJax_Preview"><script type="math/tex">
+n
+</script>
+</span> (fair) coins to toss and we want to know what is the probability that the total number of heads (i.e sum of indicators) will be “far” from half of the tosses (which is the sum of their means), say that either <span class="MathJax_Preview"><script type="math/tex">
+\#heads>\frac{3}{4}n
+</script>
+</span> or <span class="MathJax_Preview"><script type="math/tex">
+\#heads<\frac{1}{4}n
+</script>
+</span>. Chernoff’s and Hoeffding’s bounds can be used to <i>bound</i> the probability for that to happen. 
+</div>
+<div class="Indented">
+Both bounds are similar in their settings and their results, and sometimes it is not clear which bound is better for a given setting; maybe even both bounds are equivalent. In this post we will try to get an intuition which bound is stronger (and when). 
+</div>
+<div class="Indented">
+Note that each bounds have several common variations and we will discuss only the ones that are stated below. Let’s start with the first bound, a multiplicative version of Chernoff’s bound.
+</div>
+<div class="Definition">
+Chernoff bound. Let <span class="MathJax_Preview"><script type="math/tex">
+\left\{ X_{i}\right\} _{i=1}^{n}
+</script>
+</span> be a collection of independent random variables ranging in <span class="MathJax_Preview"><script type="math/tex">
+\left[0,1\right]
+</script>
+</span>, denote <span class="MathJax_Preview"><script type="math/tex">
+X:=\sum_{i=1}^{n}X_{i}
+</script>
+</span> and let <span class="MathJax_Preview"><script type="math/tex">
+\mu:=\mathbb{E}\left[X\right]=\sum_{i=1}^{n}\mathbb{E}\left[X_{i}\right]
+</script>
+</span>, then for any <span class="MathJax_Preview"><script type="math/tex">
+\epsilon\in\left(0,1\right)
+</script>
+</span> <span class="MathJax_Preview">
+<script type="math/tex;mode=display">
+
+\mathbf{P}\left[\left|X-\mu\right|>\epsilon\mu\right]\le2\exp\left(-\epsilon^{2}\frac{\mu}{3}\right)
+
+</script>
+</span>
+</div>
+<div class="Unindented">
+
+</div>
+<div class="Definition">
+Hoeffding bound. Let <span class="MathJax_Preview"><script type="math/tex">
+\left\{ X_{i}\right\} _{i=1}^{n}
+</script>
+</span> be independent random variables ranging in <span class="MathJax_Preview"><script type="math/tex">
+\left[a,b\right]
+</script>
+</span> where <span class="MathJax_Preview"><script type="math/tex">
+a<b
+</script>
+</span>, denote <span class="MathJax_Preview"><script type="math/tex">
+X:=\sum_{i=1}^{n}X_{i}
+</script>
+</span> and let <span class="MathJax_Preview"><script type="math/tex">
+\mu:=\mathbb{E}\left[X\right]=\sum_{i=1}^{n}\mathbb{E}\left[X_{i}\right]
+</script>
+</span>, then for any <span class="MathJax_Preview"><script type="math/tex">
+t
+</script>
+</span>: <span class="MathJax_Preview">
+<script type="math/tex;mode=display">
+
+\mathbf{P}\left[\left|X-\mu\right|>t\right]\le2\exp\left(\frac{-t^{2}}{n\left(b-a\right)^{2}}\right)
+
+</script>
+</span>
+</div>
+<div class="Unindented">
+
+</div>
+<h1 class="Section">
+<a class="toc" name="toc-Section-2">2</a> Writing Hoeffding’s bound as a Chernoff’s bound 
+</h1>
+<div class="Unindented">
+In first glance it seems that we cannot compare between the definitions, mostly because this small technical issue: Hoeffding’s bound allows the random variables to be in any close interval <span class="MathJax_Preview"><script type="math/tex">
+\left[a,b\right]
+</script>
+</span> rather than <span class="MathJax_Preview"><script type="math/tex">
+\left[0,1\right]
+</script>
+</span>. The solution for that is to scale and shift the variables to make them takes values in <span class="MathJax_Preview"><script type="math/tex">
+\left[0,1\right]
+</script>
+</span>. We will start with exactly that, and then transform Hoeffding’s inequality into “Chernoff’s”.
+</div>
+<div class="Indented">
+So for any <span class="MathJax_Preview"><script type="math/tex">
+i\in\left[n\right]
+</script>
+</span>, denote <span class="MathJax_Preview"><script type="math/tex">
+Y_{i}=\frac{X_{i}}{b-a}-a
+</script>
+</span> and let <span class="MathJax_Preview"><script type="math/tex">
+Y=\sum_{i=1}^{n}Y_{i}=\frac{X}{b-a}-na
+</script>
+</span>. Observe that <span class="MathJax_Preview"><script type="math/tex">
+\mathbb{E}\left[Y\right]=\frac{\mu}{b-a}-na
+</script>
+</span>. Clearly, now the range of the variables <span class="MathJax_Preview"><script type="math/tex">
+\left\{ Y_{i}\right\} _{i=1}^{n}
+</script>
+</span> is <span class="MathJax_Preview"><script type="math/tex">
+\left[0,1\right]
+</script>
+</span> so we can write Hoeffding’s bound in terms of <span class="MathJax_Preview"><script type="math/tex">
+Y_{i}
+</script>
+</span>’s
+</div>
+<div class="Indented">
+<span class="MathJax_Preview">
+<script type="math/tex;mode=display">
+\begin{aligned}
+\mathbf{P}\left[\left|X-\mu\right|>t\right] & =\mathbf{P}\left[\left|\frac{X}{b-a}-na-\frac{\mu}{b-a}+na\right|>\frac{t}{b-a}\right]\\
+ & =\mathbf{P}\left[\left|Y-\mathbb{E}\left[Y\right]\right|>\frac{t}{b-a}\cdot\frac{\mathbb{E}\left[Y\right]}{\mathbb{E}\left[Y\right]}\right]\\
+ & \le2\exp\left(\frac{-t^{2}}{\left(b-a\right)^{2}\mathbb{E}\left[Y\right]^{2}}\cdot\frac{\mathbb{E}\left[Y\right]}{3}\right)\\
+ & =2\exp\left(\frac{-t^{2}}{3\left(b-a\right)^{2}}\left(\frac{\mu}{b-a}-na\right)^{-1}\right)\\
+ & =2\exp\left(\frac{-t^{2}}{3\mu\left(b-a\right)-3a\cdot n\left(b-a\right)^{2}}\right)
+\end{aligned}
+</script>
+</span>
+</div>
+<div class="Indented">
+Where the inequality in the middle of the process is where we apply Chernoff’s bound with <span class="MathJax_Preview"><script type="math/tex">
+\epsilon=\frac{t}{\left(b-a\right)\mathbb{E}\left[Y\right]}
+</script>
+</span>, note that there is an implicit assumption here that <span class="MathJax_Preview"><script type="math/tex">
+\epsilon<1
+</script>
+</span>. 
+</div>
+<div class="Indented">
+So we managed to formulate Hoeffding’s bound in Chernoff’s settings, ending with a very messy formula. In order to explore the behavior of the bounds further, we will simplify the analysis by adding another assumption: that <span class="MathJax_Preview"><script type="math/tex">
+a=0
+</script>
+</span>.
+</div>
+<h1 class="Section">
+<a class="toc" name="toc-Section-3">3</a> Which bound to used?
+</h1>
+<div class="Unindented">
+Now we assuming that <span class="MathJax_Preview"><script type="math/tex">
+a=0
+</script>
+</span>. The restriction from previous section that <span class="MathJax_Preview"><script type="math/tex">
+\epsilon<1
+</script>
+</span> is now holds whenever <span class="MathJax_Preview"><script type="math/tex">
+t<\mu
+</script>
+</span>, which make sense because Chernoff’s bound, as we defined it, only concerned with deviations that are up to <span class="MathJax_Preview"><script type="math/tex">
+\mu
+</script>
+</span>. 
+</div>
+<div class="Indented">
+Next, the term we got for Hoeffding is simplified further into <span class="MathJax_Preview">
+<script type="math/tex;mode=display">
+
+\mathbf{P}\left[\left|X-\mu\right|>t\right]\le2\exp\left(\frac{-t^{2}}{3\mu b}\right)
+
+</script>
+</span>
+Now easy to compare between the bounds. With Hoeffding we can achieve bound of <span class="MathJax_Preview"><script type="math/tex">
+2\exp\left(\frac{-t^{2}}{nb^{2}}\right)
+</script>
+</span> and with Chernoff <span class="MathJax_Preview"><script type="math/tex">
+2\exp\left(\frac{-t^{2}}{3\mu b}\right)
+</script>
+</span>, it just left to compare between <span class="MathJax_Preview"><script type="math/tex">
+nb
+</script>
+</span> and <span class="MathJax_Preview"><script type="math/tex">
+3\mu
+</script>
+</span>. If <span class="MathJax_Preview"><script type="math/tex">
+nb<3\mu
+</script>
+</span> then Chernoff is stronger and vise versa. We conclude that none of the bounds is always preferred upon the other (which is not so surprising), and the answer to the question “which one to use” depends on the parameters of the distribution in hand.
+</div>
+<h1 class="Section">
+<a class="toc" name="toc-Section-4">4</a> Chernoff bound is tight!
+</h1>
+<div class="Unindented">
+One surprising fact about Chernoff’s bound is that in some cases it is tight (i.e. gives a lower bound). The theorem below is taken from these <a class="URL" href="https://ece.uwaterloo.ca/~nmousavi/Papers/Chernoff-Tightness.pdf">notes</a> (see the link for the full proof).
+</div>
+<div class="Theorem">
+Let <span class="MathJax_Preview"><script type="math/tex">
+\left\{ X_{i}\right\} _{i=1}^{n}
+</script>
+</span> be i.i.d random variables ranging in <span class="MathJax_Preview"><script type="math/tex">
+\left\{ 0,1\right\} 
+</script>
+</span> with <span class="MathJax_Preview"><script type="math/tex">
+\mathbf{P}\left[X_{i}=1\right]=p
+</script>
+</span>, denote <span class="MathJax_Preview"><script type="math/tex">
+X:=\sum_{i=1}^{n}X_{i}
+</script>
+</span> and let <span class="MathJax_Preview"><script type="math/tex">
+\mu:=\mathbb{E}\left[X\right]=np
+</script>
+</span>. <br />
+If <span class="MathJax_Preview"><script type="math/tex">
+p\le\frac{1}{4}
+</script>
+</span>, then for any <span class="MathJax_Preview"><script type="math/tex">
+t>0
+</script>
+</span> <span class="MathJax_Preview">
+<script type="math/tex;mode=display">
+
+\mathbf{P}\left[X-\mu>t\right]\ge\frac{1}{4}\exp\left(-t^{2}\frac{2}{\mu}\right)
+
+</script>
+</span>
+If <span class="MathJax_Preview"><script type="math/tex">
+p<\frac{1}{2}
+</script>
+</span>, then for any <span class="MathJax_Preview"><script type="math/tex">
+t\in\left[0,n\left(1-2p\right)\right]
+</script>
+</span><span class="MathJax_Preview">
+<script type="math/tex;mode=display">
+
+\mathbf{P}\left[X-\mu>t\right]\ge\frac{1}{4}\exp\left(-t^{2}\frac{2}{\mu}\right)
+
+</script>
+</span>
+</div>
+<div class="Unindented">
+
+</div>
+<div class="Indented">
+Note the differences between that regime and the one from the definition at the beginning of the post: in this theorem the variables are i.i.d (rather than only independent) and they are discrete.
+</div>
+  
+    </div>
+
+    
+  </div>
+</article>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/zepto/1.2.0/zepto.min.js"></script>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.7.1/katex.min.css" integrity="sha384-wITovz90syo1dJWVh32uuETPVEtGigN07tkttEqPv+uR2SE/mbQcG7ATL28aI9H0" crossorigin="anonymous">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.7.1/katex.min.js" integrity="sha384-/y1Nn9+QQAipbNQWU65krzJralCnuOasHncUFXGkdwntGeSvQicrYkiUBwsgUqc1" crossorigin="anonymous"></script>
+
+<script type="text/javascript">
+  'use strict';
+  $(".MathJax_Preview > script").each(function() {
+    var self = $(this);
+    var texTxt = self.text();
+    var el = self.get(0);
+    var isCenter = (el.type.indexOf('mode=display') !== -1);
+    
+    katex.render(texTxt, el.parentElement, {throwOnError: false, displayMode: isCenter});
+  });
+
+  $(document).ready(function(){
+    if(window.activate_disqus_comments){
+          window.activate_disqus_comments();
+    } 
+  });
+</script>
+
+      </div>
+    </main>
+
+    <footer class="site-footer">
+
+  <div class="wrapper">
+    <a href="/site/">
+      <h2 class="footer-heading">TheoryLunch Blog</h2>
+    </a>
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li>
+            
+              
+                Eran Amar
+              
+            
+            </li>
+            
+            <li><a href="mailto:eran.amar@gmail.com">eran.amar@gmail.com</a></li>
+            
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-2">
+        <ul class="social-media-list">
+          
+          <li>
+            <a href="https://github.com/eranamar"><span class="icon icon--github"><svg viewBox="0 0 16 16" width="16px" height="16px"><path fill="#828282" d="M7.999,0.431c-4.285,0-7.76,3.474-7.76,7.761 c0,3.428,2.223,6.337,5.307,7.363c0.388,0.071,0.53-0.168,0.53-0.374c0-0.184-0.007-0.672-0.01-1.32 c-2.159,0.469-2.614-1.04-2.614-1.04c-0.353-0.896-0.862-1.135-0.862-1.135c-0.705-0.481,0.053-0.472,0.053-0.472 c0.779,0.055,1.189,0.8,1.189,0.8c0.692,1.186,1.816,0.843,2.258,0.645c0.071-0.502,0.271-0.843,0.493-1.037 C4.86,11.425,3.049,10.76,3.049,7.786c0-0.847,0.302-1.54,0.799-2.082C3.768,5.507,3.501,4.718,3.924,3.65 c0,0,0.652-0.209,2.134,0.796C6.677,4.273,7.34,4.187,8,4.184c0.659,0.003,1.323,0.089,1.943,0.261 c1.482-1.004,2.132-0.796,2.132-0.796c0.423,1.068,0.157,1.857,0.077,2.054c0.497,0.542,0.798,1.235,0.798,2.082 c0,2.981-1.814,3.637-3.543,3.829c0.279,0.24,0.527,0.713,0.527,1.437c0,1.037-0.01,1.874-0.01,2.129 c0,0.208,0.14,0.449,0.534,0.373c3.081-1.028,5.302-3.935,5.302-7.362C15.76,3.906,12.285,0.431,7.999,0.431z"/></svg>
+</span><span class="username">eranamar</span></a>
+
+          </li>
+          
+
+          
+        </ul>
+      </div>
+
+      <div class="footer-col footer-col-3">
+        <p>Computer science topics over lunch</p>
+      </div>
+	  </div>
+	  <a class="link" href="/site/feed.xml">RSS feed</a>
+	  
+  </div>
+
+</footer>
+
+
+
+  </body>
+
+</html>
